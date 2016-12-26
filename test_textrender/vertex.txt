@@ -1,0 +1,18 @@
+#version 330 core
+
+in vec3 position;
+in vec3 instance_color;
+//in vec4 instance_position;
+
+out Fragment
+{
+    vec4 color;
+} fragment;
+
+void main(void)
+{
+  //  gl_Position = (position + instance_position);// * vec4(0.1, 0.1, 1.0, 1.0);
+	gl_Position = vec4(position ,1.0);
+    fragment.color = vec4(instance_color ,1.0);
+}
+  
