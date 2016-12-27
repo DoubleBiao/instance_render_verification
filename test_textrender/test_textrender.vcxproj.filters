@@ -43,5 +43,11 @@
     <Text Include="ins_vertex.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="fragment2.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="geometry.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

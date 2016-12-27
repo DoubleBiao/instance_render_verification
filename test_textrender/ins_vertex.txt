@@ -1,3 +1,4 @@
+//ins_vertex
 #version 330 core
 
 in vec3 position;
@@ -19,7 +20,7 @@ void main(void)
 	float column_index = gl_InstanceID - row_index * rownum;
     gl_Position = vec4( position + row_index * columndir * eledimension + column_index * rowdir * eledimension, 1.0); 
 	
-	float color = row_index / 256;
+	float color = row_index /2/2/2;
 	while(color > 3)
 	{
 		color -= 3;

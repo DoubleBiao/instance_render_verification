@@ -89,6 +89,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="fragment.txt" />
+    <Text Include="fragment2.txt" />
+    <Text Include="geometry.txt" />
     <Text Include="ins_vertex.txt" />
     <Text Include="vertex.txt" />
   </ItemGroup>

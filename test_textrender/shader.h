@@ -15,16 +15,30 @@ public:
     GLuint Program;
 	Shader(){}
     // Constructor generates the shader on the fly
-    Shader(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar* geometryPath)
-    {
+
+    Shader(const GLchar* vertexPath, const GLchar* geometryPath , const GLchar* fragmentPath)
+	{
+		if(geometryPath != NULL)
+		{
+			set_v_g_f(vertexPath,geometryPath,fragmentPath);
+		}
+		else
+		{
+			set_v_f(vertexPath,fragmentPath);
+		}
+	}
+    void set_v_g_f(const GLchar* vertexPath, const GLchar* geometryPath , const GLchar* fragmentPath)
+	{
         // 1. Retrieve the vertex/fragment source code from filePath
         std::string vertexCode;
         std::string fragmentCode;
 		std::string geometryCode;
-        std::ifstream vShaderFile;
+        
+		std::ifstream vShaderFile;
         std::ifstream fShaderFile;
 		std::ifstream gShaderFile;
-        // ensures ifstream objects can throw exceptions:
+        
+		// ensures ifstream objects can throw exceptions:
         vShaderFile.exceptions (std::ifstream::badbit);
         fShaderFile.exceptions (std::ifstream::badbit);
 		gShaderFile.exceptions (std::ifstream::badbit);
@@ -38,7 +52,7 @@ public:
             // Read file's buffer contents into streams
             vShaderStream << vShaderFile.rdbuf();
             fShaderStream << fShaderFile.rdbuf();
-			fShaderStream << gShaderFile.rdbuf();
+			gShaderStream << gShaderFile.rdbuf();
             // close file handlers
             vShaderFile.close();
             fShaderFile.close();
@@ -52,11 +66,11 @@ public:
         {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
         }
-        const GLchar* vShaderCode = vertexCode.c_str();
+        const GLchar * vShaderCode = vertexCode.c_str();
         const GLchar * fShaderCode = fragmentCode.c_str();
 		const GLchar * gShaderCode = geometryCode.c_str();
         // 2. Compile shaders
-        GLuint vertex, fragment,geometry;
+        GLuint vertex, fragment, geometry;
         GLint success;
         GLchar infoLog[512];
         // Vertex Shader
@@ -112,7 +126,7 @@ public:
 
     }
 
-	Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
+	void set_v_f(const GLchar* vertexPath, const GLchar* fragmentPath)
     {
         // 1. Retrieve the vertex/fragment source code from filePath
         std::string vertexCode;

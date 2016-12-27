@@ -21,28 +21,21 @@ protected:
 	glm::mat4 _view;
 	glm::mat4 _projection;
 public:
-	void initshader(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar*geometrypath)
+	virtual void initshader(const GLchar* vertexPath, const GLchar* geometrypath, const GLchar*fragmentPath)
 	{
-		if(geometrypath != NULL)
-		{
-			_shader = Shader(vertexPath, fragmentPath, geometrypath);
-		}
-		else
-		{
-			_shader = Shader(vertexPath, fragmentPath);
-		}
+		_shader = Shader(vertexPath, geometrypath,fragmentPath);
 	}
 	virtual void setattributepointer() = 0;
 	virtual void writeobjectanduniform() = 0;
 	virtual void bindbuffers() = 0;
 	virtual void unbindbuffers() = 0;
 	virtual void dorendering() = 0;
-
+	virtual void useshader() = 0;
 	void draw(glm::mat4 const & view, glm::mat4 const & projection)
 	{
 		_view = view;
 		_projection = projection;
-		_shader.Use();
+		useshader();
 		setattributepointer();
 		writeobjectanduniform();
 		bindbuffers();
@@ -95,12 +88,11 @@ virtual	void writebuffer()
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 	void init(GLuint vertexnum, GLfloat vertex[], glm::vec3 &color,
-		const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar*geometrypath, glm::mat4 const & model,
-		GLuint mode,GLuint buffer_state = GL_STATIC_DRAW)
+		glm::mat4 const & model,GLuint buffer_state = GL_STATIC_DRAW)
 	{
 		_model = model;
-		_mode  = mode;
-		initshader(vertexPath,fragmentPath,geometrypath);
+		_mode  = GL_LINE_LOOP;
+		//yinitshader(vertexPath,fragmentPath,geometrypath);
 		GLuint k = 0;
 		_verticesnum = vertexnum;
 
@@ -191,8 +183,14 @@ virtual	void changevertex(GLfloat * vertex)
 	{
 		_model = model;
 	}
+	void useshader()
+	{
+		_shader.Use();
+	}
 };
 
+#define SCALE 1
+#define CURRENT 2
 class gl_color_ver_instance_primitive: public gl_color_ver_primitive
 {
 protected:
@@ -201,8 +199,11 @@ protected:
 	GLuint _elemennum;
 	glm::vec3 _rowdir;
 	glm::vec3 _columndir;
-
+	Shader _shader2;
+	GLuint _rendertype;
+	GLfloat *_origin;
 public:
+	gl_color_ver_instance_primitive(){_origin = NULL;}
 	void writebuffer()
 	{
 		glBindVertexArray(_VAO);
@@ -214,31 +215,57 @@ public:
 	}
 	void react_vertexchange(GLfloat orgine[], glm::vec3 rowdir, glm::vec3 columndir)
 	{
-		float rowlen = glm::length(rowdir);
-		float columnlen = glm::length(columndir);
-		
-		_rownum = rowlen/_elem_dimen;
-		_elemennum = (rowlen/_elem_dimen)*(columnlen /_elem_dimen);
 		_rowdir = rowdir;
 		_columndir = columndir;
 
+		if(_origin != NULL)
+		{
+			delete _origin;
+		}
+		_origin = new GLfloat[3];
+		for(int i =0; i<3; i++)
+		{
+			_origin[i] = orgine[i];
+		}
+		react_change();
+	}
+
+	void react_changetype(GLuint rendertype)
+	{
+		_rendertype = rendertype;
+		if(_rendertype == SCALE)
+		{
+			_elem_dimen = 0.001;
+		}
+		else
+		{
+			_elem_dimen = 0.01;
+		}
+		react_change();
+	}
+
+	void react_change()
+	{
 		GLfloat vertex_tmp[12];
-		                                                                 //         elementsquare:
-		vertex_tmp[0 + 2 * 3] = orgine[0];                               //       1   --rowdir-->   0
-		vertex_tmp[1 + 2 * 3] = orgine[1];                               //      / \               / \ 
-		vertex_tmp[2 + 2 * 3] = orgine[2];                               //       |                 |
-		                                                                 //    colunmdir         columndir
-		vertex_tmp[0 + 0 * 3] = orgine[0] + columndir.x * _elem_dimen;   //       |                 |
-		vertex_tmp[1 + 0 * 3] = orgine[1] + columndir.y * _elem_dimen;   //       |                 |
-		vertex_tmp[2 + 0 * 3] = orgine[2] + columndir.z * _elem_dimen;   //       2   --rowdir-->   3 
+		_rownum = glm::length(_rowdir)/_elem_dimen;
+		_elemennum = (glm::length(_rowdir)/_elem_dimen)*(glm::length(_columndir) /_elem_dimen);
 
-		vertex_tmp[0 + 3 * 3] = orgine[0] + rowdir.x * _elem_dimen;  
-		vertex_tmp[1 + 3 * 3] = orgine[1] + rowdir.y * _elem_dimen;
-		vertex_tmp[2 + 3 * 3] = orgine[2] + rowdir.z * _elem_dimen;
+																		   //         elementsquare:
+		vertex_tmp[0 + 2 * 3] = _origin[0];                                //       1   --rowdir-->   0
+		vertex_tmp[1 + 2 * 3] = _origin[1];                                //      / \               / \ 
+		vertex_tmp[2 + 2 * 3] = _origin[2];								   //       |                 |
+																		   //    colunmdir         columndir
+		vertex_tmp[0 + 0 * 3] = _origin[0] + _columndir.x * _elem_dimen;   //       |                 |
+		vertex_tmp[1 + 0 * 3] = _origin[1] + _columndir.y * _elem_dimen;   //       |                 |
+		vertex_tmp[2 + 0 * 3] = _origin[2] + _columndir.z * _elem_dimen;   //       2   --rowdir-->   3 
 
-		vertex_tmp[0 + 1 * 3] = orgine[0] + rowdir.x * _elem_dimen + columndir.x * _elem_dimen;  
-		vertex_tmp[1 + 1 * 3] = orgine[1] + rowdir.y * _elem_dimen + columndir.y * _elem_dimen;
-		vertex_tmp[2 + 1 * 3] = orgine[2] + rowdir.z * _elem_dimen + columndir.z * _elem_dimen;
+		vertex_tmp[0 + 3 * 3] = _origin[0] + _rowdir.x * _elem_dimen;  
+		vertex_tmp[1 + 3 * 3] = _origin[1] + _rowdir.y * _elem_dimen;
+		vertex_tmp[2 + 3 * 3] = _origin[2] + _rowdir.z * _elem_dimen;
+
+		vertex_tmp[0 + 1 * 3] = _origin[0] + _rowdir.x * _elem_dimen + _columndir.x * _elem_dimen;  
+		vertex_tmp[1 + 1 * 3] = _origin[1] + _rowdir.y * _elem_dimen + _columndir.y * _elem_dimen;
+		vertex_tmp[2 + 1 * 3] = _origin[2] + _rowdir.z * _elem_dimen + _columndir.z * _elem_dimen;
 
 		changevertex(vertex_tmp);
 	}
@@ -246,13 +273,22 @@ public:
 	{
 		glDrawArraysInstancedARB(_mode, 0, _verticesnum,_elemennum);
 	}
-	void init(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar*geometrypath, glm::mat4 const & model,
-		GLuint mode,GLuint buffer_state = GL_STATIC_DRAW)
+	void init(glm::mat4 const & model,GLuint rendertype,GLuint buffer_state = GL_STATIC_DRAW)
 	{
 		_model = model;
-		_mode  = mode;
-		_elem_dimen = .001;
-		initshader(vertexPath,fragmentPath,geometrypath);
+		_mode  = GL_LINES_ADJACENCY;
+		_rendertype = rendertype;
+		
+		if(_rendertype == SCALE)
+		{
+			_elem_dimen = 0.001;
+		}
+		else
+		{
+			_elem_dimen = 0.01;
+		}
+
+		//initshader(vertexPath,fragmentPath,geometrypath);
 		GLuint k = 0;
 		_verticesnum = 4;
 
@@ -274,6 +310,11 @@ public:
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
+	void initshader(const GLchar* vertexPath1, const GLchar* geometrypath1, const GLchar*fragmentPath1,const GLchar* vertexPath2, const GLchar* geometrypath2, const GLchar*fragmentPath2)
+	{
+		_shader = Shader(vertexPath1,geometrypath1,fragmentPath1);
+		_shader2 = Shader(vertexPath2,geometrypath2,fragmentPath2);
+	}
 	void writeobjectanduniform()
 	{
 		//GLint modelLoc = glGetUniformLocation(_shader.Program, "model");
@@ -294,6 +335,18 @@ public:
 		glUniform1i(rownumLoc, _rownum);
 		glUniform1f(eledimensionLoc,_elem_dimen);
 };
+	void useshader()
+	{
+		if(_rendertype == SCALE)
+		{
+			_shader2.Use();
+		}
+		else
+		{
+			_shader.Use();
+		}
+	}
+	
 };
 class baseobject
 {

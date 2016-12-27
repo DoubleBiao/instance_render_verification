@@ -14,7 +14,7 @@
 // Other includes
 #include "Shader.h"
 #include "testcube.h"
-
+#include <string>
 using namespace std;
 GLFWwindow* gl_glfw_init();
 
@@ -53,6 +53,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 		cube.moveedge(incre,'x','-');
 	}
+	if (key == GLFW_KEY_A && action == GLFW_PRESS)
+	{
+		cube.changetype(SCALE);
+	}
+	if (key == GLFW_KEY_S && action == GLFW_PRESS)
+	{
+		cube.changetype(CURRENT);
+	}
 }
 
 int main()
@@ -61,7 +69,12 @@ int main()
 	window = gl_glfw_init();
     // Build and compile our shader program
 	cube.loadvertex(cubevex);
-	cube.init("vertex.txt","ins_vertex.txt","fragment.txt");
+	string surfaceshader[]={ "vertex.txt", "", "fragment.txt"};
+	string elemshader1[]={ "ins_vertex.txt", "geometry.txt", "fragment2.txt"};
+	string elemshader2[]={ "ins_vertex.txt", "", "fragment.txt"};
+
+	cube.initShader(surfaceshader,elemshader1,elemshader2);
+	cube.init();
 
     while (!glfwWindowShouldClose(window))
     {
